@@ -2,6 +2,7 @@ cycler==0.10.0
 decorator==4.0.10
 ipython==5.1.0
 ipython-genutils==0.1.0
+git+https://github.com/matplotlib/matplotlib.git@2cdb5aab4f2a623185182f4e812e120c208bcedc#matplotlib
 matplotlib==2.0.0b3+1972.g2cdb5aa
 numpy==1.11.1
 pexpect==4.2.0

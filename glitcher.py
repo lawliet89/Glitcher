@@ -94,7 +94,7 @@ def main():
             interval=interval)
     if args.output is not None:
         Writer = animation.writers['ffmpeg']
-        writer = Writer()
+        writer = Writer(fps=args.fps, bitrate=-1)
         print("Saving to", args.output)
         ani.save(args.output, writer=writer)
 
