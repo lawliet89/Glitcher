@@ -41,8 +41,8 @@ def make_image_generator(image, wav, sample_rate, fps, sample_count_factor):
 
     def generator():
         index = 0
-        while index < sample_count:
-            with Pool(3) as p:
+        with Pool(3) as p:
+            while index < sample_count:
                 start = time.clock()
 
                 samples = wav[index:min(index + interval_samples, sample_count)]
