@@ -4,10 +4,12 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from itertools import repeat
 from scipy import misc
 from scipy.io import wavfile
 from scipy.ndimage import filters
 from numpy import fft
+from multiprocessing import Pool
 
 def make_parser():
     parser = argparse.ArgumentParser(description='Convolve image with sound')
@@ -28,8 +30,6 @@ def make_image_generator(image, wav, sample_rate, fps, sample_count_factor):
     interval_samples = round(interval*sample_rate*sample_count_factor)
     sample_count = len(wav)
 
-    pixels = [pixel for row in image for pixel in row]
-    image_fft = fft.rfft(pixels, norm="ortho")
     height = len(image)
     width = len(image[0])
 
@@ -37,31 +37,33 @@ def make_image_generator(image, wav, sample_rate, fps, sample_count_factor):
     greens = image[:, :, 1]
     blues = image[:, :, 2]
 
+    channels = [reds, greens, blues]
+
     def generator():
         index = 0
         while index < sample_count:
-            start = time.clock()
+            with Pool(3) as p:
+                start = time.clock()
 
-            samples = wav[index:min(index + interval_samples, sample_count)]
-            index += interval_samples
+                samples = wav[index:min(index + interval_samples, sample_count)]
+                index += interval_samples
 
-            convolution_matrix = abs(fft.rfft2(samples, norm='ortho'))
-            normalized = convolution_matrix/np.linalg.norm(convolution_matrix)
+                convolution_matrix = abs(fft.rfft2(samples, norm='ortho'))
+                normalized = convolution_matrix/np.linalg.norm(convolution_matrix)
 
-            convolved_red = convolve_channel(reds, normalized)
-            convolved_blue = convolve_channel(blues, normalized)
-            convolved_green = convolve_channel(greens, normalized)
+                (convolved_red, convolved_green, convolved_blue) = p.starmap(convolve_channel,
+                                                                             zip(channels, repeat(normalized)))
 
-            convolved = image.copy()
-            convolved[:, :, 0] = convolved_red
-            convolved[:, :, 1] = convolved_green
-            convolved[:, :, 2] = convolved_blue
+                convolved = np.zeros((height, width, 3), 'uint8')
+                convolved[:, :, 0] = convolved_red
+                convolved[:, :, 1] = convolved_green
+                convolved[:, :, 2] = convolved_blue
 
-            end = time.clock()
-            time_taken = end - start
-            print("Frame took %ss FPS met: %s" % (time_taken, time_taken < interval))
+                end = time.clock()
+                time_taken = end - start
+                print("Frame took %ss FPS met: %s" % (time_taken, time_taken < interval))
 
-            yield convolved
+                yield convolved
 
     return generator
 
