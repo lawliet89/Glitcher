@@ -64,6 +64,7 @@ def make_image_generator(image, wav, sample_rate, fps, sample_count_factor):
                 print("Frame took %ss FPS met: %s" % (time_taken, time_taken < interval))
 
                 yield convolved
+            print("Done")
 
     return generator
 
@@ -90,10 +91,10 @@ def main():
     ani = animation.FuncAnimation(fig, update_frame,
             make_image_generator(image, wav, sample_rate, args.fps, args.sample_count_factor),
             fargs=(height, width),
-            interval=interval, repeat=False)
+            interval=interval)
     if args.output is not None:
         Writer = animation.writers['ffmpeg']
-        writer = Writer(fps=args.fps, metadata=dict(artist='Me'), bitrate=1800)
+        writer = Writer()
         print("Saving to", args.output)
         ani.save(args.output, writer=writer)
 
